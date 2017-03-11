@@ -16,15 +16,36 @@ import Brick.Types
 import Brick.Widgets.Core
 import Brick.Util (fg, on)
 
-drawUI :: () -> [Widget ()]
-drawUI l = [ui]
+type State = (Int, Int)
+
+drawUI :: State -> [Widget ()]
+drawUI p = [ui]
   where
   hud   = hLimit 20 $ str "HUD" <=> fill ' '
-  mapUI = str "MAP" <=> fill ' '
+  mapUI = centerAbout (Location p) mapImg
   ui = border (hud <+> vBorder <+> mapUI)
+  mapImg = raw $ vertCat
+    [ row | rs <- mapData
+          , let row = horizCat $ char defAttr <$> rs
+    ]
+  maxX = 20
+  maxY = 10
+  mapData :: [[Char]]
+  mapData = [ ts | x <- [1..maxX]
+                 , let ts = [ t | y <- [1..maxY]
+                            , let t = if x == 1 ||
+                                         x == maxX ||
+                                         y == 1 ||
+                                         y == maxY
+                                       then '#'
+                                       else '.'
+                            ]
+            ]
 
-initialState :: ()
-initialState = ()
+
+
+initialState :: State
+initialState = (0,0)
 
 customAttr :: A.AttrName
 customAttr = L.listSelectedAttr <> "custom"
@@ -36,7 +57,7 @@ theMap = A.attrMap V.defAttr
     , (customAttr,            fg V.cyan)
     ]
 
-theApp :: M.App () e ()
+theApp :: M.App State e ()
 theApp =
     M.App { M.appDraw = drawUI
           , M.appChooseCursor = M.showFirstCursor
@@ -45,7 +66,7 @@ theApp =
           , M.appAttrMap = const theMap
           }
 
-appEvent :: () -> T.BrickEvent () e -> T.EventM () (T.Next ())
+appEvent :: State -> T.BrickEvent () e -> T.EventM () (T.Next State)
 appEvent l (T.VtyEvent (EvKey KEsc [])) = halt l
 appEvent l _ = M.continue l
 
