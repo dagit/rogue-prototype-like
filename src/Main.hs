@@ -21,7 +21,11 @@ type State = (Int, Int)
 drawUI :: State -> [Widget ()]
 drawUI p = [ui]
   where
-  hud   = hLimit 20 $ str "HUD" <=> fill ' '
+  hud   = hLimit 20 $
+          vBox [ str "HUD1"
+               , str "HUD2"
+               , fill ' '
+               ]
   mapUI = centerAbout (Location p) mapImg
   ui = border (hud <+> vBorder <+> mapUI)
   mapImg = raw $ vertCat
@@ -31,14 +35,17 @@ drawUI p = [ui]
   maxX = 20
   maxY = 10
   mapData :: [[Char]]
-  mapData = [ ts | x <- [1..maxX]
-                 , let ts = [ t | y <- [1..maxY]
-                            , let t = if x == 1 ||
-                                         x == maxX ||
-                                         y == 1 ||
-                                         y == maxY
-                                       then '#'
-                                       else '.'
+  mapData = [ ts | y <- [0..maxY]
+                 , let ts = [ t | x <- [0..maxX]
+                            , let t =
+                                    if (x,y) == p
+                                      then '@'
+                                      else if x == 0 ||
+                                              x == maxX ||
+                                              y == 0 ||
+                                              y == maxY
+                                             then '#'
+                                             else '.'
                             ]
             ]
 
@@ -68,6 +75,10 @@ theApp =
 
 appEvent :: State -> T.BrickEvent () e -> T.EventM () (T.Next State)
 appEvent l (T.VtyEvent (EvKey KEsc [])) = halt l
+appEvent (x,y) (T.VtyEvent (EvKey KDown [])) = M.continue (x,y+1)
+appEvent (x,y) (T.VtyEvent (EvKey KUp [])) = M.continue (x,y-1)
+appEvent (x,y) (T.VtyEvent (EvKey KLeft [])) = M.continue (x-1,y)
+appEvent (x,y) (T.VtyEvent (EvKey KRight [])) = M.continue (x+1,y)
 appEvent l _ = M.continue l
 
 main :: IO ()
