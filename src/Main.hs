@@ -14,17 +14,14 @@ import Brick.Types
   ( Widget
   )
 import Brick.Widgets.Core
-  ( (<+>)
-  , str
-  , vLimit
-  , hLimit
-  , vBox
-  , withAttr
-  )
 import Brick.Util (fg, on)
 
 drawUI :: () -> [Widget ()]
-drawUI l = [str "Hello, World!"]
+drawUI l = [ui]
+  where
+  hud   = hLimit 20 $ str "HUD" <=> fill ' '
+  mapUI = str "MAP" <=> fill ' '
+  ui = border (hud <+> vBorder <+> mapUI)
 
 initialState :: ()
 initialState = ()
@@ -49,7 +46,7 @@ theApp =
           }
 
 appEvent :: () -> T.BrickEvent () e -> T.EventM () (T.Next ())
-appEvent l (T.VtyEvent e) = undefined
+appEvent l (T.VtyEvent (EvKey KEsc [])) = halt l
 appEvent l _ = M.continue l
 
 main :: IO ()
